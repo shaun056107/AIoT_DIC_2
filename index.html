@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MLR Feature Selection Lab · 50 Startups & Boston Housing</title>
+  <meta name="description" content="Interactive multiple linear regression lab comparing 5 feature-selection methods (Lasso, Forward SFS, RFE, ElasticNet, Exhaustive Search) on 50 Startups, Boston Housing, or your own CSV dataset." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="bg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <header class="hero">
+    <div class="container">
+      <div class="badge-row">
+        <span class="pill">Multiple Linear Regression</span>
+        <span class="pill pill-alt">5 Feature-Selection Methods</span>
+        <span class="pill pill-alt">100% in-browser</span>
+      </div>
+      <h1>Feature Selection <span class="grad">Lab</span></h1>
+      <p class="lead">比較 <b>Lasso</b>、<b>Forward SFS</b>、<b>RFE</b>、<b>ElasticNet</b> 與 <b>Exhaustive Search</b> 五種特徵選取方法，在不同特徵數量下的 RMSE 與 R² 表現。</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- ================= CONTROLS ================= -->
+    <section class="card controls" id="controls" aria-label="Analysis settings">
+      <div class="control-grid">
+        <label class="field field-wide">
+          <span>Dataset · 資料集</span>
+          <select id="datasetSelect">
+            <option value="startups">💼 50 Startups (Profit)</option>
+            <option value="boston">🏠 Boston Housing (MEDV)</option>
+            <option value="custom">📂 Upload your own CSV…</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Evaluation · 評估方式</span>
+          <select id="modeSelect">
+            <option value="cv">K-Fold Cross-Validation</option>
+            <option value="holdout">Hold-out Train / Test</option>
+          </select>
+        </label>
+        <label class="field" id="foldsField">
+          <span>K folds</span>
+          <input type="number" id="foldsInput" min="2" max="20" value="5" />
+        </label>
+        <label class="field" id="repeatsField">
+          <span>Repeats</span>
+          <input type="number" id="repeatsInput" min="1" max="20" value="3" />
+        </label>
+        <label class="field hidden" id="testSizeField">
+          <span>Test size <b id="testSizeVal">20%</b></span>
+          <input type="range" id="testSizeInput" min="10" max="50" step="5" value="20" />
+        </label>
+        <label class="field">
+          <span>Random seed</span>
+          <input type="number" id="seedInput" value="42" />
+        </label>
+        <label class="field">
+          <span>Max features <b id="kmaxVal"></b></span>
+          <input type="range" id="kmaxInput" min="1" max="5" value="5" />
+        </label>
+        <label class="field">
+          <span>Penalty α = <b id="alphaVal">5%</b> of α<sub>max</sub></span>
+          <input type="range" id="alphaInput" min="1" max="60" value="5" />
+        </label>
+        <label class="field">
+          <span>ElasticNet L1 ratio <b id="l1Val">0.50</b></span>
+          <input type="range" id="l1Input" min="5" max="95" step="5" value="50" />
+        </label>
+      </div>
+    </section>
+
+    <!-- ================= CUSTOM UPLOAD ================= -->
+    <section class="card hidden" id="uploadCard" aria-label="Upload dataset">
+      <h2 class="card-title">📂 Upload a dataset <small>上傳任意 CSV 資料集</small></h2>
+      <label class="dropzone" id="dropzone" for="fileInput">
+        <input type="file" id="fileInput" accept=".csv,.txt,.tsv" hidden />
+        <div class="dz-icon">⬆</div>
+        <div><b>Drop a CSV file here</b> or click to browse</div>
+        <div class="muted">Comma / semicolon / tab delimited · first row = header · categorical columns are one-hot encoded automatically</div>
+      </label>
+      <div class="muted" id="fileInfo"></div>
+    </section>
+
+    <!-- ================= VARIABLES ================= -->
+    <section class="card" id="variablesCard" aria-label="Variables">
+      <div class="card-head">
+        <h2 class="card-title">🧩 Variables <small>目標變數與候選特徵</small></h2>
+        <button class="btn btn-primary" id="runBtn">▶ Run analysis</button>
+      </div>
+      <p class="muted" id="datasetDesc"></p>
+      <div class="var-grid">
+        <label class="field">
+          <span>Target (y) · 目標</span>
+          <select id="targetSelect"></select>
+        </label>
+        <div class="field">
+          <span>Candidate features (X) · 候選特徵 <button class="link-btn" id="toggleAllBtn">toggle all</button></span>
+          <div class="chips" id="featureChecks"></div>
+        </div>
+      </div>
+      <ul class="notes" id="prepNotes"></ul>
+    </section>
+
+    <!-- ================= KPIs ================= -->
+    <section class="kpis" id="kpis" aria-label="Key metrics"></section>
+
+    <!-- ================= MAIN CHARTS ================= -->
+    <section class="chart-row" aria-label="Comparison charts">
+      <article class="card chart-card">
+        <div class="card-head">
+          <h2 class="card-title">RMSE Comparison across 5 Feature Selection Methods <small>RMSE（越低越好）</small></h2>
+          <button class="icon-btn" data-download="rmseChart" title="Download PNG">⤓</button>
+        </div>
+        <div class="chart-wrap"><canvas id="rmseChart"></canvas></div>
+      </article>
+      <article class="card chart-card">
+        <div class="card-head">
+          <h2 class="card-title">R-squared Comparison across 5 Feature Selection Methods <small>R²（越高越好）</small></h2>
+          <button class="icon-btn" data-download="r2Chart" title="Download PNG">⤓</button>
+        </div>
+        <div class="chart-wrap"><canvas id="r2Chart"></canvas></div>
+      </article>
+    </section>
+
+    <!-- ================= INSIGHTS ================= -->
+    <section class="card" id="insightsCard" aria-label="Insights">
+      <div class="card-head">
+        <h2 class="card-title">💡 Insights <small>自動分析結論</small></h2>
+        <div class="seg" id="langSeg">
+          <button data-lang="zh" class="active">中文</button>
+          <button data-lang="en">EN</button>
+        </div>
+      </div>
+      <div id="insights" class="insights"></div>
+    </section>
+
+    <!-- ================= SELECTION MAP ================= -->
+    <section class="card" aria-label="Selected features per method">
+      <div class="card-head">
+        <h2 class="card-title">🗺️ Feature Selection Map <small>各方法於每個特徵數所選的特徵</small></h2>
+        <span class="muted small">★ = best RMSE for that number of features · cell shade = relative RMSE</span>
+      </div>
+      <div class="table-scroll"><table class="map-table" id="mapTable"></table></div>
+    </section>
+
+    <section class="two-col">
+      <article class="card" aria-label="Feature rankings">
+        <h2 class="card-title">🏅 Feature Rankings <small>各方法的特徵重要性順序</small></h2>
+        <div id="rankings" class="rankings"></div>
+      </article>
+      <article class="card" aria-label="Penalized coefficients">
+        <div class="card-head">
+          <h2 class="card-title">📉 Lasso vs ElasticNet coefficients <small>標準化係數</small></h2>
+        </div>
+        <div class="chart-wrap short"><canvas id="penaltyChart"></canvas></div>
+      </article>
+    </section>
+
+    <!-- ================= MODEL EXPLORER ================= -->
+    <section class="card" id="explorer" aria-label="Model explorer">
+      <div class="card-head">
+        <h2 class="card-title">🔬 Model Explorer <small>檢視任一方法 × 特徵數的模型</small></h2>
+        <div class="inline-fields">
+          <select id="exMethod"></select>
+          <select id="exK"></select>
+        </div>
+      </div>
+      <div class="equation" id="equation"></div>
+      <div class="explorer-grid">
+        <div class="mini-card"><h3>Actual vs Predicted <small>(out-of-sample)</small></h3><div class="chart-wrap short"><canvas id="avpChart"></canvas></div></div>
+        <div class="mini-card"><h3>Residuals vs Predicted</h3><div class="chart-wrap short"><canvas id="residChart"></canvas></div></div>
+        <div class="mini-card"><h3>Standardized coefficients <small>(Δy per 1 SD)</small></h3><div class="chart-wrap short"><canvas id="coefChart"></canvas></div></div>
+      </div>
+      <div class="table-scroll"><table class="data-table" id="olsTable"></table></div>
+      <div class="ols-stats" id="olsStats"></div>
+    </section>
+
+    <!-- ================= DATA ================= -->
+    <section class="two-col">
+      <article class="card" aria-label="Correlation heatmap">
+        <h2 class="card-title">🔥 Correlation Heatmap <small>相關係數矩陣</small></h2>
+        <div class="table-scroll"><table class="heatmap" id="heatmap"></table></div>
+      </article>
+      <article class="card" aria-label="Data preview">
+        <h2 class="card-title">📋 Data Preview <small>資料預覽</small></h2>
+        <div class="table-scroll tall"><table class="data-table" id="previewTable"></table></div>
+      </article>
+    </section>
+
+    <!-- ================= RESULTS ================= -->
+    <section class="card" aria-label="All results">
+      <div class="card-head">
+        <h2 class="card-title">📑 Full Results <small>完整結果</small></h2>
+        <button class="btn" id="exportBtn">⤓ Export CSV</button>
+      </div>
+      <div class="table-scroll tall"><table class="data-table" id="resultsTable"></table></div>
+    </section>
+
+    <section class="card method-notes" aria-label="Methodology">
+      <h2 class="card-title">📘 Methodology <small>方法說明</small></h2>
+      <div class="method-grid">
+        <div><b style="color:#38bdf8">Lasso (L1 Ranking)</b><p>Fit Lasso on standardized features at α; rank features by |coefficient|. Ties (zeroed coefficients) are broken by the order in which features enter the regularization path.</p></div>
+        <div><b style="color:#34d399">Forward SFS</b><p>Start empty; greedily add the feature that gives the lowest cross-validated RMSE at each step.</p></div>
+        <div><b style="color:#fb923c">RFE</b><p>Fit OLS on all features, repeatedly remove the feature with the smallest |standardized coefficient|.</p></div>
+        <div><b style="color:#f472b6">ElasticNet Ranking</b><p>Same as Lasso but with a mixed L1/L2 penalty (L1 ratio ρ); correlated features share weight.</p></div>
+        <div><b style="color:#a78bfa">Exhaustive Search</b><p>Evaluate every combination of k features and keep the best — the optimal subset under the CV criterion.</p></div>
+        <div><b>Evaluation</b><p>Each selected subset is refit with OLS and scored by out-of-fold RMSE &amp; R² (pooled over folds/repeats). In hold-out mode, selection uses inner CV on the training set only and scores come from the test set.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container footer">
+    Built with vanilla JS + Chart.js · all computation runs locally in your browser · <span id="timing"></span>
+  </footer>
+
+  <div class="loader hidden" id="loader"><div class="spinner"></div><div>Running feature selection…</div></div>
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/datasets.js"></script>
+  <script src="js/ml.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
