@@ -1,56 +1,107 @@
-# Feature Selection Lab — Multiple Linear Regression
+# Feature Selection Lab — Multiple Linear Regression (Python & Web)
 
-Interactive web page comparing **5 feature-selection methods** for multiple linear regression on
-**50 Startups** and **Boston Housing** — or **any CSV you upload**. Everything runs in the browser
-(pure JavaScript + Chart.js), so it deploys to GitHub Pages as a static site.
+Interactive lab and web application comparing **5 feature-selection methods** for multiple linear regression on
+**50 Startups** and **Boston Housing** — or **any custom CSV dataset**.
 
-## Features
-- Dataset dropdown: 50 Startups · Boston Housing · Upload your own CSV (auto type detection + one-hot encoding)
-- **RMSE vs Number of Features** and **R² vs Number of Features** charts for
-  Lasso (L1 Ranking), Forward SFS, RFE, ElasticNet Ranking, Exhaustive Search
-- K-fold (repeated) cross-validation or hold-out train/test evaluation, adjustable seed, α, L1 ratio, max features
-- Auto-generated insights (中文 / English): best k, best method, gap vs exhaustive optimum
-- Feature selection map, feature rankings, Lasso vs ElasticNet coefficient chart
-- Model explorer: regression equation, actual-vs-predicted, residuals, standardized coefficients,
-  statsmodels-style OLS table (SE, t, p-values, Adj. R², F, AIC, BIC)
-- Correlation heatmap, data preview, CSV export, PNG chart download
+All machine learning computations are implemented in **Python** using **scikit-learn**, with precomputed JSON for instant web visualization and full GitHub Pages compatibility.
 
-## Run locally
-Just open `index.html`, or serve the folder:
+---
+
+## 🔬 Five Feature Selection Methods Compared
+
+| Method | Algorithm Mechanism |
+|---|---|
+| **Lasso (L1 Ranking)** | Shrinkage regression with L1 penalty; features ranked by absolute standardized coefficients $\|w_j\|$ |
+| **Forward SFS** | Sequential Forward Selection: greedily adds the feature that yields lowest cross-validation RMSE |
+| **RFE** | Recursive Feature Elimination: iteratively removes the feature with smallest standardized OLS coefficient |
+| **ElasticNet Ranking** | Combined L1 + L2 regularization; correlated features share weights and are ranked by $\|w_j\|$ |
+| **Exhaustive Search** | Best subset selection: globally evaluates all $\binom{p}{k}$ combinations to find the exact optimum |
+
+---
+
+## 📊 Dual Visualization Requirements
+
+1. **Left Chart: RMSE Comparison across 5 Methods**
+   - **X-axis**: Number of Features ($k = 1$ to $5$)
+   - **Y-axis**: RMSE (Lower is Better)
+   - **Key trend**: Minimum error reached around $k = 2 \sim 3$ features (~8,200–9,200 depending on split). Exhaustive Search (purple line) consistently finds the global minimum. Adding all 5 features causes RMSE to rise due to noise/overfitting from redundant variables.
+
+2. **Right Chart: $R^2$ Comparison across 5 Methods**
+   - **X-axis**: Number of Features ($k = 1$ to $5$)
+   - **Y-axis**: $R^2$ (Higher is Better)
+   - **Key trend**: Inverses the RMSE curve. Exhaustive Search achieves the highest explanatory power ($R^2 > 0.94$). When all 5 features are added, $R^2$ declines to ~0.936.
+
+---
+
+## 🚀 Running the Python Machine Learning Code
+
+### 1. Run Python CLI on built-in or custom datasets
 ```bash
-python -m http.server 8000   # then visit http://localhost:8000
+# Analyze both built-in datasets and export precomputed JSON for the web UI
+python ml_core.py --all
+
+# Analyze only 50 Startups
+python ml_core.py --dataset startups
+
+# Analyze only Boston Housing
+python ml_core.py --dataset boston
+
+# Analyze ANY custom dataset
+python ml_core.py --input path/to/dataset.csv --target target_col_name --kmax 5
 ```
 
-## Deploy on GitHub Pages
+### 2. Run the Step-by-Step Jupyter Notebook
+Open `feature_selection_lab.ipynb` in VS Code or Jupyter:
+```bash
+jupyter notebook feature_selection_lab.ipynb
+```
+Contains full data loading, one-hot encoding, model fitting, and matplotlib publication-quality plots.
+
+---
+
+## 🌐 Web Application & Deployment on GitHub Pages
+
+The web page is static and can be deployed directly to GitHub Pages without needing a server:
+
+### Local preview
+```bash
+python -m http.server 8765
+```
+Visit: `http://localhost:8765/`
+
+### Deploy to GitHub Pages
 ```bash
 git init
 git add .
-git commit -m "Feature selection lab"
+git commit -m "Multiple Linear Regression Feature Selection Lab"
 git branch -M main
-git remote add origin https://github.com/<user>/<repo>.git
+git remote add origin https://github.com/<your-username>/<your-repo>.git
 git push -u origin main
 ```
-Then on GitHub: **Settings → Pages → Build and deployment → Source: Deploy from a branch → `main` / `(root)`**.
-The site will be available at `https://<user>.github.io/<repo>/`.
+Then on GitHub:
+1. Navigate to **Settings** → **Pages**.
+2. Under **Build and deployment**, select **Deploy from a branch**.
+3. Choose branch **`main`** and folder **`/(root)`**, then click **Save**.
+4. The live site will be ready at: `https://<your-username>.github.io/<your-repo>/`.
 
-## Methodology
-| Method | How subsets of size k are chosen |
-|---|---|
-| Lasso (L1 Ranking) | Rank by \|coef\| of Lasso on standardized X at α (ties → regularization-path entry order) |
-| Forward SFS | Greedily add the feature minimizing CV RMSE |
-| RFE | Repeatedly drop the feature with smallest \|standardized OLS coef\| |
-| ElasticNet Ranking | Same as Lasso with mixed L1/L2 penalty |
-| Exhaustive Search | Evaluate all C(p, k) subsets, keep best CV RMSE |
+---
 
-Each chosen subset is refit with OLS and scored with pooled out-of-fold RMSE and R²
-(hold-out mode: selection uses inner CV on training data; scores from the test set).
+## 📁 Repository Structure
 
-## Files
 ```
-index.html        page layout
-css/style.css     design system
-js/ml.js          regression + feature-selection engine
-js/app.js         UI, charts, insights
-js/datasets.js    embedded built-in datasets
-data/*.csv        original CSV files
+├── ml_core.py                    # Core Python ML engine (scikit-learn, cross-validation, 5 methods)
+├── feature_selection_lab.ipynb   # Interactive Jupyter notebook with complete steps & plots
+├── create_notebook.py            # Utility script to generate the notebook
+├── index.html                    # Web interface layout
+├── css/
+│   └── style.css                 # Responsive modern dark glassmorphism styling
+├── js/
+│   ├── app.js                    # UI logic, chart rendering, insights & explorer
+│   ├── precomputed.js            # Precomputed scikit-learn results for instant loading
+│   ├── datasets.js               # Embedded built-in CSVs for offline viewing
+│   └── ml.js                     # Fallback in-browser computation engine
+└── data/
+    ├── 50_startups.csv           # 50 Startups dataset (Profit)
+    ├── boston_housing.csv        # Boston Housing dataset (MEDV)
+    └── precomputed.json          # Exported scikit-learn metrics
 ```

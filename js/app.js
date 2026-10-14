@@ -8,7 +8,7 @@
   /* ------------------------------------------------------ built-in data */
   const BUILTIN = {
     startups: {
-      csv: window.BUILTIN_CSV.startups,
+      csv: window.BUILTIN_CSV ? window.BUILTIN_CSV.startups : '',
       target: 'Profit',
       desc: {
         en: '50 US startups — predict <b>Profit</b> from R&D Spend, Administration, Marketing Spend and State. State is one-hot encoded (baseline California), giving <b>5 candidate features</b>.',
@@ -16,7 +16,7 @@
       },
     },
     boston: {
-      csv: window.BUILTIN_CSV.boston,
+      csv: window.BUILTIN_CSV ? window.BUILTIN_CSV.boston : '',
       target: 'medv',
       desc: {
         en: 'Boston Housing (506 tracts) — predict <b>medv</b> (median home value, $1000s) from 13 features: crim, zn, indus, chas, nox, rm, age, dis, rad, tax, ptratio, b, lstat.',
@@ -31,18 +31,21 @@
     D: null, R: null,
     lang: 'zh',
     charts: {},
+    methodFilter: 'all',
   };
 
   /* ----------------------------------------------------- chart defaults */
-  Chart.defaults.color = '#94a3b8';
-  Chart.defaults.font.family = "'Inter', 'Noto Sans TC', sans-serif";
-  Chart.defaults.borderColor = 'rgba(148,163,184,0.10)';
-  Chart.defaults.plugins.legend.labels.usePointStyle = true;
-  Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(10,15,32,0.95)';
-  Chart.defaults.plugins.tooltip.borderColor = 'rgba(167,139,250,0.4)';
-  Chart.defaults.plugins.tooltip.borderWidth = 1;
-  Chart.defaults.plugins.tooltip.padding = 12;
-  Chart.defaults.plugins.tooltip.titleFont = { weight: '700' };
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = "'Inter', 'Noto Sans TC', sans-serif";
+    Chart.defaults.borderColor = 'rgba(148,163,184,0.10)';
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(10,15,32,0.95)';
+    Chart.defaults.plugins.tooltip.borderColor = 'rgba(167,139,250,0.4)';
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.padding = 12;
+    Chart.defaults.plugins.tooltip.titleFont = { weight: '700' };
+  }
 
   /* ------------------------------------------------------------ helpers */
   const fmt = (v) => {
@@ -61,6 +64,7 @@
 
   function toast(msg, ok = false) {
     const t = $('toast');
+    if (!t) return;
     t.textContent = msg;
     t.className = 'toast' + (ok ? ' ok' : '');
     clearTimeout(toast._t);
@@ -68,8 +72,11 @@
   }
 
   function makeChart(id, config) {
+    if (typeof Chart === 'undefined') return null;
+    const canvas = $(id);
+    if (!canvas) return null;
     if (state.charts[id]) state.charts[id].destroy();
-    state.charts[id] = new Chart($(id), config);
+    state.charts[id] = new Chart(canvas, config);
     return state.charts[id];
   }
 
@@ -105,11 +112,11 @@
   }
 
   function clearResults() {
-    Object.values(state.charts).forEach((c) => c.destroy());
+    Object.values(state.charts).forEach((c) => c && c.destroy());
     state.charts = {};
     ['kpis', 'insights', 'mapTable', 'rankings', 'equation', 'olsTable', 'olsStats',
       'heatmap', 'previewTable', 'resultsTable', 'prepNotes', 'targetSelect', 'featureChecks']
-      .forEach((id) => ($(id).innerHTML = ''));
+      .forEach((id) => { const el = $(id); if (el) el.innerHTML = ''; });
     state.R = null;
   }
 
@@ -171,10 +178,55 @@
         ks.max = D.p; ks.value = cfg.kmax;
         $('kmaxVal').textContent = `${cfg.kmax} / ${D.p}`;
 
-        const R = ML.runAnalysis(D, { ...getOptions(), kmax: cfg.kmax });
+        let R;
+        const opt = getOptions();
+        const isDefaultSetup = (opt.mode === 'cv' && opt.folds === 5 && opt.seed === 42 && opt.repeats === 1);
+        if (state.key !== 'custom' && window.PRECOMPUTED && window.PRECOMPUTED[state.key] && isDefaultSetup && cfg.selected.size >= cfg.colInfo.filter((c) => c.name !== cfg.target).length) {
+          const py = window.PRECOMPUTED[state.key];
+          const all = Array.from({ length: D.n }, (_, i) => i);
+          const evalE = new ML.Evaluator(D.Z, D.y, ML.kfoldSplits(all, 5, 1, 42));
+          const methods = py.methods.map((m) => {
+            const perK = m.per_k.slice(0, cfg.kmax).map((pk) => ({
+              k: pk.k,
+              subset: pk.subset_indices,
+              rmse: pk.rmse,
+              mae: pk.mae,
+              r2: pk.r2
+            }));
+            const order = m.feature_ranking ? m.feature_ranking.map((name) => D.names.indexOf(name)).filter((i) => i >= 0) : null;
+            const coefs = D.names.map((name) => (m.id === 'lasso' ? (py.lasso_coefficients[name] || 0) : (py.enet_coefficients[name] || 0)));
+            return {
+              id: m.id,
+              name: m.name,
+              color: m.color,
+              perK,
+              order,
+              extra: { alpha: 0.05, coefs }
+            };
+          });
+          R = {
+            methods,
+            kmax: Math.min(cfg.kmax, py.kmax),
+            names: D.names,
+            n: D.n,
+            p: D.p,
+            baseline: { rmse: py.baseline_rmse },
+            evaluator: evalE,
+            selRows: all,
+            split: null,
+            exhaustive: { ok: true, combos: 31, limit: ML.EXHAUSTIVE_LIMIT },
+            options: { ...opt },
+            ms: 0,
+            engine: 'Python (scikit-learn)'
+          };
+        } else {
+          R = ML.runAnalysis(D, { ...opt, kmax: cfg.kmax });
+          R.engine = 'In-browser JS Engine';
+        }
+
         state.D = D; state.R = R;
         renderAll();
-        $('timing').textContent = `last run ${R.ms.toFixed(0)} ms`;
+        $('timing').textContent = `${R.engine} · ${R.ms.toFixed(0)} ms`;
       } catch (e) {
         console.error(e);
         toast('⚠ ' + e.message);
@@ -186,6 +238,7 @@
 
   function renderAll() {
     renderNotes();
+    renderChartNote();
     renderKPIs();
     renderMainCharts();
     renderInsights();
@@ -200,8 +253,9 @@
 
   function renderNotes() {
     const { D, R } = state;
+    if (!D || !R) return;
     const notes = [...D.notes];
-    if (!R.exhaustive.ok) notes.push({
+    if (R.exhaustive && !R.exhaustive.ok) notes.push({
       en: `Exhaustive search skipped: ${R.exhaustive.combos.toLocaleString()} subsets exceed the limit of ${R.exhaustive.limit.toLocaleString()}. Lower "Max features" to enable it.`,
       zh: `窮舉搜尋需評估 ${R.exhaustive.combos.toLocaleString()} 種組合，超過上限 ${R.exhaustive.limit.toLocaleString()}，已略過。請調低「Max features」。`,
     });
@@ -211,40 +265,58 @@
   /* ------------------------------------------------------------- stats */
   function summarize() {
     const { R } = state;
+    if (!R || !R.methods) return { best: null, bestPerK: [], kPars: 1 };
     let best = null;
     const bestPerK = [];
     for (let k = 1; k <= R.kmax; k++) {
       let bk = null;
       for (const m of R.methods) {
+        if (!m.perK || !m.perK[k - 1]) continue;
         const r = m.perK[k - 1];
         if (!bk || r.rmse < bk.rmse) bk = { ...r, method: m };
         if (!best || r.rmse < best.rmse - 1e-12) best = { ...r, method: m };
       }
-      bestPerK.push(bk);
+      if (bk) bestPerK.push(bk);
     }
-    const kPars = bestPerK.find((b) => b.rmse <= best.rmse * 1.01).k;
+    const kParsItem = best && bestPerK.find((b) => b && b.rmse <= best.rmse * 1.01);
+    const kPars = kParsItem ? kParsItem.k : (best ? best.k : 1);
     return { best, bestPerK, kPars };
   }
 
   function renderKPIs() {
     const { D, R } = state;
+    if (!D || !R) return;
     const { best, bestPerK, kPars } = summarize();
-    const last = bestPerK[R.kmax - 1];
+    const last = bestPerK.length ? bestPerK[bestPerK.length - 1] : null;
     const evalTxt = R.options.mode === 'cv'
       ? `${R.options.folds}-fold CV × ${R.options.repeats}`
       : `hold-out ${Math.round(R.options.testSize * 100)}% test`;
+
+    const bMethod = best && best.method ? best.method.name : '—';
+    const bColor = best && best.method ? best.method.color : '#38bdf8';
+    const bRmse = best ? fmt(best.rmse) : '—';
+    const bR2 = best ? fmtR2(best.r2) : '—';
+    const bMae = best ? fmt(best.mae) : '—';
+    const bK = best ? best.k : '—';
+
+    const lastRmse = last ? fmt(last.rmse) : '—';
+    const lastR2 = last ? fmtR2(last.r2) : '—';
+    const lastSub = (last && best && best.rmse > 0)
+      ? `R² ${lastR2} · ${pct(last.rmse, best.rmse) >= 0 ? '+' : ''}${pct(last.rmse, best.rmse).toFixed(1)}% vs best`
+      : `R² ${lastR2}`;
+
     const cards = [
       { label: 'Dataset', value: `${D.n} × ${D.p}`, sub: `target: ${esc(D.target)} · ${evalTxt}`, c1: '#64748b', c2: '#94a3b8' },
-      { label: 'Best RMSE', value: fmt(best.rmse), sub: `${best.method.name} · k = ${best.k}`, c1: best.method.color, c2: '#38bdf8' },
-      { label: 'Best R²', value: fmtR2(best.r2), sub: `MAE ${fmt(best.mae)}`, c1: '#34d399', c2: '#38bdf8' },
+      { label: 'Best RMSE', value: bRmse, sub: `${bMethod} · k = ${bK}`, c1: bColor, c2: '#38bdf8' },
+      { label: 'Best R²', value: bR2, sub: `MAE ${bMae}`, c1: '#34d399', c2: '#38bdf8' },
       { label: 'Recommended k', value: kPars, sub: 'fewest features within 1% of best RMSE', c1: '#a78bfa', c2: '#f472b6' },
       {
         label: R.kmax === D.p ? 'All features (k = p)' : `Largest k = ${R.kmax}`,
-        value: fmt(last.rmse),
-        sub: `R² ${fmtR2(last.r2)} · ${pct(last.rmse, best.rmse) >= 0 ? '+' : ''}${pct(last.rmse, best.rmse).toFixed(1)}% vs best`,
+        value: lastRmse,
+        sub: lastSub,
         c1: '#fb923c', c2: '#f472b6',
       },
-      { label: 'Baseline (mean)', value: fmt(R.baseline.rmse), sub: 'RMSE of predicting ȳ only', c1: '#475569', c2: '#64748b' },
+      { label: 'Baseline (mean)', value: fmt(R.baseline ? R.baseline.rmse : 0), sub: 'RMSE of predicting ȳ only', c1: '#475569', c2: '#64748b' },
     ];
     $('kpis').innerHTML = cards.map((c, i) => `
       <div class="kpi" style="--c1:${c.c1};--c2:${c.c2};animation-delay:${i * 60}ms">
@@ -255,6 +327,14 @@
   }
 
   /* ------------------------------------------------------- main charts */
+  const METHOD_STYLES = {
+    exh:   { dash: [],            width: 3.8, radius: 8.0, hoverRadius: 10.0, style: 'star' },
+    sfs:   { dash: [8, 4],        width: 2.6, radius: 6.2, hoverRadius: 8.5,  style: 'rectRot' },
+    lasso: { dash: [],            width: 2.2, radius: 5.0, hoverRadius: 7.5,  style: 'circle' },
+    rfe:   { dash: [3, 3],        width: 2.2, radius: 4.0, hoverRadius: 6.5,  style: 'triangle' },
+    enet:  { dash: [10, 3, 2, 3], width: 2.2, radius: 3.2, hoverRadius: 5.5,  style: 'rect' },
+  };
+
   function lineConfig(metric, yTitle) {
     const { R } = state;
     const labels = Array.from({ length: R.kmax }, (_, i) => i + 1);
@@ -262,43 +342,99 @@
       type: 'line',
       data: {
         labels,
-        datasets: R.methods.map((m) => ({
-          label: m.name,
-          data: m.perK.map((r) => r[metric]),
-          borderColor: m.color,
-          backgroundColor: m.color,
-          borderWidth: m.id === 'exh' ? 4 : 2.4,
-          borderDash: m.id === 'exh' ? [] : undefined,
-          pointRadius: m.id === 'exh' ? 6 : 4.5,
-          pointHoverRadius: 8,
-          pointStyle: { lasso: 'circle', sfs: 'rectRot', rfe: 'triangle', enet: 'rect', exh: 'star' }[m.id],
-          tension: 0.25,
-          order: m.id === 'exh' ? 0 : 1,
-        })),
+        datasets: R.methods.map((m) => {
+          const st = METHOD_STYLES[m.id] || { dash: [], width: 2.2, radius: 5, style: 'circle' };
+          const isHidden = (state.methodFilter && state.methodFilter !== 'all' && state.methodFilter !== m.id);
+          return {
+            label: m.name,
+            data: m.perK.map((r) => r[metric]),
+            borderColor: m.color,
+            backgroundColor: m.color,
+            borderWidth: st.width,
+            borderDash: st.dash,
+            pointRadius: st.radius,
+            pointHoverRadius: st.hoverRadius,
+            pointStyle: st.style,
+            tension: 0.25,
+            hidden: isHidden,
+            order: m.id === 'exh' ? 0 : (m.id === 'sfs' ? 1 : 2),
+          };
+        }),
       },
       options: {
         responsive: true, maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
-        animation: { duration: 700, easing: 'easeOutQuart' },
+        animation: { duration: 600, easing: 'easeOutQuart' },
         scales: {
           x: { title: { display: true, text: 'Number of Features', font: { weight: '600' } }, grid: { display: false } },
           y: { title: { display: true, text: yTitle, font: { weight: '600' } }, ticks: { callback: (v) => (metric === 'r2' ? v.toFixed(3) : fmt(v)) } },
         },
         plugins: {
-          legend: { position: 'bottom', labels: { padding: 16, boxWidth: 10 } },
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 10,
+              boxWidth: 10,
+              font: { size: 11.5, weight: '500' }
+            }
+          },
           tooltip: {
             callbacks: {
               title: (items) => `k = ${items[0].label} feature(s)`,
               label: (ctx) => ` ${ctx.dataset.label}: ${metric === 'r2' ? fmtR2(ctx.parsed.y) : fmt(ctx.parsed.y)}`,
               afterLabel: (ctx) => {
                 const m = R.methods[ctx.datasetIndex];
-                return '   ↳ ' + m.perK[ctx.dataIndex].subset.map((j) => R.names[j]).join(', ');
+                if (!m || !m.perK[ctx.dataIndex] || !m.perK[ctx.dataIndex].subset) return '';
+                return '   ↳ ' + m.perK[ctx.dataIndex].subset.map((j) => R.names[j] || '').join(', ');
               },
             },
           },
         },
       },
     };
+  }
+
+  function setMethodFilter(methodId) {
+    state.methodFilter = methodId;
+    document.querySelectorAll('#methodFilterBar .filter-chip').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.method === methodId);
+    });
+    ['rmseChart', 'r2Chart'].forEach((id) => {
+      const chart = state.charts[id];
+      if (!chart || !chart.data || !chart.data.datasets) return;
+      chart.data.datasets.forEach((ds, idx) => {
+        const m = state.R?.methods[idx];
+        if (!m) return;
+        ds.hidden = (methodId !== 'all' && m.id !== methodId);
+      });
+      chart.update();
+    });
+  }
+
+  function renderChartNote() {
+    const el = $('chartNoteBanner');
+    if (!el) return;
+    if (state.key === 'startups') {
+      el.innerHTML = state.lang === 'zh'
+        ? `<b>💡 為什麼部分折線完全重疊？(Why do curves overlap?)</b><br />
+          多元線性迴歸中，模型評估指標是由所選特徵子集建立的 OLS 迴歸決定。當多種特徵選取方法<b>選出完全相同的特徵組合</b>時（例如 50 Startups 在 <code>k=1</code> 皆選 <code>R&D Spend</code>、<code>k=2</code> 皆選 <code>R&D + Marketing Spend</code>），其 CV RMSE 與 R² <b>在數學上必定 100% 相同</b>！<br />
+          兩組方法於 <code>k=3</code> 分歧：<b>Exhaustive & SFS</b> 找出 <code>State_Florida</code>（RMSE 9,381 較優），而 <b>Lasso / RFE / ElasticNet</b> 納入 <code>Administration</code>（RMSE 9,538 較差）。點擊上方按鈕可單獨切換各方法檢視！`
+        : `<b>💡 Why do some curves overlap?</b><br />
+          In Multiple Linear Regression, evaluation metrics (RMSE & R²) are calculated by fitting an OLS model on the selected feature subset. When multiple algorithms <b>select the exact same subset of features</b> (e.g. at <code>k=1</code> all 5 pick <code>R&D Spend</code>; at <code>k=2</code> all 5 pick <code>R&D Spend + Marketing Spend</code>), their cross-validation RMSE & R² <b>are mathematically identical</b>!<br />
+          They diverge at <code>k=3</code>: <b>Exhaustive & SFS</b> discover <code>State_Florida</code> (better RMSE: 9,381), while <b>Lasso, RFE & ElasticNet</b> include <code>Administration</code> (worse RMSE: 9,538). Use the buttons above to isolate any individual method!`;
+    } else if (state.key === 'boston') {
+      el.innerHTML = state.lang === 'zh'
+        ? `<b>💡 為什麼波士頓房價在前 4 個特徵數完全重疊？</b><br />
+          在波士頓房價資料集中，所有 5 種方法在 <code>k=1~4</code> <b>完全一致地</b>依序選中了最強的 4 個特徵：<code>lstat</code> → <code>rm</code> → <code>ptratio</code> → <code>dis</code>！因此 <code>k=1~4</code> 的 RMSE 完全相同。<br />
+          於 <code>k=5</code> 產生分歧：<b>Forward SFS、RFE、ElasticNet 與 Exhaustive</b> 皆選入 <code>nox</code>（RMSE 5.034 較優），而 <b>Lasso</b> 選入 <code>b</code>（RMSE 5.116 較差）。點擊上方按鈕可單獨查看！`
+        : `<b>💡 Why do Boston Housing curves overlap at k = 1 to 4?</b><br />
+          Across Boston Housing, all 5 methods <b>independently and unanimously agree</b> on the top 4 strongest predictors: <code>lstat</code> → <code>rm</code> → <code>ptratio</code> → <code>dis</code>! Because identical subsets produce identical OLS models, their RMSE & R² match perfectly for <code>k=1..4</code>.<br />
+          At <code>k=5</code> they diverge: <b>Forward SFS, RFE, ElasticNet & Exhaustive</b> select <code>nox</code> (better RMSE: 5.034), whereas <b>Lasso</b> selects <code>b</code> (RMSE: 5.116). Use the buttons above to view any method!`;
+    } else {
+      el.innerHTML = state.lang === 'zh'
+        ? `<b>💡 特徵子集相同即產生相同指標：</b>在同一資料集上，若不同選取演算法挑出相同的特徵組合，則配適之 OLS 迴歸的 RMSE 與 R² 必定相同。下方特徵地圖（Feature Selection Map）標註了每種方法在各特徵數所挑選的實際欄位。`
+        : `<b>💡 Identical subsets produce identical metrics:</b> In linear regression, if different algorithms select the same feature subset, their OLS cross-validation metrics are identical. The Feature Selection Map below displays the exact columns selected at each step.`;
+    }
   }
 
   function renderMainCharts() {
@@ -309,20 +445,24 @@
   /* ---------------------------------------------------------- insights */
   function renderInsights() {
     const { R, D } = state;
+    if (!R || !D) return;
     const { best, bestPerK, kPars } = summarize();
-    const N = (s) => s.map((j) => R.names[j]);
+    if (!best) return;
+    const N = (s) => (s || []).map((j) => R.names[j] || '');
     const zh = [], en = [];
     const exh = R.methods.find((m) => m.id === 'exh');
     const bestSubset = N(best.subset).map((x) => `<code>${esc(x)}</code>`).join(', ');
 
-    zh.push(['🏆', `整體最佳：<b>${best.method.name}</b> 在 <b>k = ${best.k}</b> 時 RMSE 最低（<b>${fmt(best.rmse)}</b>），R² = <b>${fmtR2(best.r2)}</b>，使用特徵：${bestSubset}。`]);
-    en.push(['🏆', `Overall best: <b>${best.method.name}</b> with <b>k = ${best.k}</b> — lowest RMSE <b>${fmt(best.rmse)}</b>, R² = <b>${fmtR2(best.r2)}</b>, features: ${bestSubset}.`]);
+    const bestMethodName = best.method ? best.method.name : 'Model';
+    zh.push(['🏆', `整體最佳：<b>${bestMethodName}</b> 在 <b>k = ${best.k}</b> 時 RMSE 最低（<b>${fmt(best.rmse)}</b>），R² = <b>${fmtR2(best.r2)}</b>，使用特徵：${bestSubset}。`]);
+    en.push(['🏆', `Overall best: <b>${bestMethodName}</b> with <b>k = ${best.k}</b> — lowest RMSE <b>${fmt(best.rmse)}</b>, R² = <b>${fmtR2(best.r2)}</b>, features: ${bestSubset}.`]);
 
-    zh.push(['🎯', `最佳特徵數量：在最佳 RMSE 1% 以內的最少特徵數為 <b>k = ${kPars}</b>（RMSE ${fmt(bestPerK[kPars - 1].rmse)}，R² ${fmtR2(bestPerK[kPars - 1].r2)}），模型既精簡又具備良好預測力。`]);
-    en.push(['🎯', `Optimal feature count: the most parsimonious model within 1% of the best RMSE uses <b>k = ${kPars}</b> (RMSE ${fmt(bestPerK[kPars - 1].rmse)}, R² ${fmtR2(bestPerK[kPars - 1].r2)}).`]);
+    const parsObj = bestPerK[kPars - 1] || best;
+    zh.push(['🎯', `最佳特徵數量：在最佳 RMSE 1% 以內的最少特徵數為 <b>k = ${kPars}</b>（RMSE ${fmt(parsObj.rmse)}，R² ${fmtR2(parsObj.r2)}），模型既精簡又具備良好預測力。`]);
+    en.push(['🎯', `Optimal feature count: the most parsimonious model within 1% of the best RMSE uses <b>k = ${kPars}</b> (RMSE ${fmt(parsObj.rmse)}, R² ${fmtR2(parsObj.r2)}).`]);
 
     const last = bestPerK[R.kmax - 1];
-    if (R.kmax === D.p && best.k < D.p) {
+    if (last && R.kmax === D.p && best.k < D.p) {
       const inc = pct(last.rmse, best.rmse);
       zh.push(['📈', `使用全部 ${D.p} 個特徵時 RMSE 上升至 <b>${fmt(last.rmse)}</b>（比最佳高 ${inc.toFixed(1)}%），R² 降至 <b>${fmtR2(last.r2)}</b>，顯示納入過多特徵會引入雜訊或造成過度擬合。`]);
       en.push(['📈', `With all ${D.p} features RMSE rises to <b>${fmt(last.rmse)}</b> (+${inc.toFixed(1)}% vs best) and R² drops to <b>${fmtR2(last.r2)}</b> — extra features add noise / overfitting.`]);
@@ -333,7 +473,7 @@
 
     if (exh) {
       const agree = R.methods.filter((m) => m.id !== 'exh').map((m) => {
-        const same = m.perK.filter((r, i) => r.rmse <= exh.perK[i].rmse * (1 + 1e-9)).length;
+        const same = m.perK.filter((r, i) => exh.perK[i] && r.rmse <= exh.perK[i].rmse * (1 + 1e-9)).length;
         return { m, same };
       });
       const lst = agree.map((a) => `${a.m.name} ${a.same}/${R.kmax}`).join('、');
@@ -342,7 +482,12 @@
 
       const gaps = agree.map(({ m }) => {
         let worst = { gap: 0, k: 0 };
-        m.perK.forEach((r, i) => { const g = pct(r.rmse, exh.perK[i].rmse); if (g > worst.gap) worst = { gap: g, k: i + 1 }; });
+        m.perK.forEach((r, i) => {
+          if (exh.perK[i]) {
+            const g = pct(r.rmse, exh.perK[i].rmse);
+            if (g > worst.gap) worst = { gap: g, k: i + 1 };
+          }
+        });
         return { m, ...worst };
       }).filter((g) => g.gap > 0.5).sort((a, b) => b.gap - a.gap);
       if (gaps.length) {
@@ -356,15 +501,24 @@
 
     // most important single feature
     const first = {};
-    R.methods.forEach((m) => { const f = R.names[m.perK[0].subset[0]]; first[f] = (first[f] || 0) + 1; });
-    const [topF, topC] = Object.entries(first).sort((a, b) => b[1] - a[1])[0];
-    zh.push(['🔑', `最關鍵的單一特徵：<code>${esc(topF)}</code>（${topC}/${R.methods.length} 種方法在 k = 1 時都選擇它，RMSE ${fmt(bestPerK[0].rmse)}，R² ${fmtR2(bestPerK[0].r2)}）。`]);
-    en.push(['🔑', `Most important single feature: <code>${esc(topF)}</code> (chosen at k = 1 by ${topC}/${R.methods.length} methods; RMSE ${fmt(bestPerK[0].rmse)}, R² ${fmtR2(bestPerK[0].r2)}).`]);
+    R.methods.forEach((m) => {
+      if (m.perK && m.perK[0] && m.perK[0].subset && m.perK[0].subset.length) {
+        const f = R.names[m.perK[0].subset[0]];
+        if (f) first[f] = (first[f] || 0) + 1;
+      }
+    });
+    const entries = Object.entries(first).sort((a, b) => b[1] - a[1]);
+    if (entries.length) {
+      const [topF, topC] = entries[0];
+      const bk0 = bestPerK[0] || best;
+      zh.push(['🔑', `最關鍵的單一特徵：<code>${esc(topF)}</code>（${topC}/${R.methods.length} 種方法在 k = 1 時都選擇它，RMSE ${fmt(bk0.rmse)}，R² ${fmtR2(bk0.r2)}）。`]);
+      en.push(['🔑', `Most important single feature: <code>${esc(topF)}</code> (chosen at k = 1 by ${topC}/${R.methods.length} methods; RMSE ${fmt(bk0.rmse)}, R² ${fmtR2(bk0.r2)}).`]);
+    }
 
-    const imp = pct(R.baseline.rmse, best.rmse);
-    zh.push(['📊', `相較於只預測平均值的基準模型（RMSE ${fmt(R.baseline.rmse)}），最佳模型的誤差降低了 <b>${(100 - (best.rmse / R.baseline.rmse) * 100).toFixed(1)}%</b>。`]);
-    en.push(['📊', `Compared with the mean-only baseline (RMSE ${fmt(R.baseline.rmse)}), the best model cuts error by <b>${(100 - (best.rmse / R.baseline.rmse) * 100).toFixed(1)}%</b>.`]);
-    void imp;
+    if (R.baseline && R.baseline.rmse) {
+      zh.push(['📊', `相較於只預測平均值的基準模型（RMSE ${fmt(R.baseline.rmse)}），最佳模型的誤差降低了 <b>${(100 - (best.rmse / R.baseline.rmse) * 100).toFixed(1)}%</b>。`]);
+      en.push(['📊', `Compared with the mean-only baseline (RMSE ${fmt(R.baseline.rmse)}), the best model cuts error by <b>${(100 - (best.rmse / R.baseline.rmse) * 100).toFixed(1)}%</b>.`]);
+    }
 
     const list = state.lang === 'zh' ? zh : en;
     $('insights').innerHTML = '<ul>' + list.map(([i, t]) => `<li data-icon="${i}">${t}</li>`).join('') + '</ul>';
@@ -373,10 +527,11 @@
   /* --------------------------------------------------------------- map */
   function renderMap() {
     const { R } = state;
+    if (!R) return;
     let html = '<thead><tr><th>Method</th>' +
       Array.from({ length: R.kmax }, (_, i) => `<th>k = ${i + 1}</th>`).join('') + '</tr></thead><tbody>';
     const colStats = Array.from({ length: R.kmax }, (_, i) => {
-      const v = R.methods.map((m) => m.perK[i].rmse);
+      const v = R.methods.map((m) => (m.perK && m.perK[i] ? m.perK[i].rmse : 0));
       return { min: Math.min(...v), max: Math.max(...v) };
     });
     for (const m of R.methods) {
@@ -385,8 +540,8 @@
         const { min, max } = colStats[i];
         const t = max - min > 1e-12 ? (r.rmse - min) / (max - min) : 0;
         const bg = t < 0.5 ? `rgba(52,211,153,${0.22 * (1 - 2 * t)})` : `rgba(244,114,182,${0.22 * (2 * t - 1)})`;
-        const prev = i ? new Set(m.perK[i - 1].subset) : new Set();
-        const tags = r.subset.map((j) => `<span class="tag ${prev.has(j) ? '' : 'new'}">${esc(R.names[j])}</span>`).join('');
+        const prev = (i && m.perK[i - 1] && m.perK[i - 1].subset) ? new Set(m.perK[i - 1].subset) : new Set();
+        const tags = (r && r.subset ? r.subset : []).map((j) => `<span class="tag ${prev.has(j) ? '' : 'new'}">${esc(R.names[j] || '')}</span>`).join('');
         const star = r.rmse <= min + 1e-9 ? '<span class="star">★</span> ' : '';
         html += `<td class="map-cell" style="background:${bg}" title="RMSE ${fmt(r.rmse)} · R² ${fmtR2(r.r2)}">${tags}
           <div class="metric">${star}RMSE ${fmt(r.rmse)} · R² ${fmtR2(r.r2)}</div></td>`;
@@ -399,23 +554,29 @@
   /* ---------------------------------------------------------- rankings */
   function renderRankings() {
     const { R } = state;
+    if (!R) return;
     $('rankings').innerHTML = R.methods.map((m) => {
       let order = m.order;
       let note = '';
       if (!order) {
         order = [];
-        m.perK.forEach((r) => r.subset.forEach((j) => { if (!order.includes(j)) order.push(j); }));
+        m.perK.forEach((r) => r && r.subset && r.subset.forEach((j) => { if (!order.includes(j)) order.push(j); }));
         note = ' <span class="muted small">(first appearance)</span>';
       }
       return `<div class="rank-row"><div class="rname" style="color:${m.color}">${m.name}${note}</div>
-        <div class="rank-list">${order.map((j, i) => `<span class="tag"><b>${i + 1}</b>${esc(R.names[j])}</span>`).join('')}</div></div>`;
+        <div class="rank-list">${order.map((j, i) => `<span class="tag"><b>${i + 1}</b>${esc(R.names[j] || '')}</span>`).join('')}</div></div>`;
     }).join('');
   }
 
   function renderPenaltyChart() {
     const { R } = state;
-    const lasso = R.methods.find((m) => m.id === 'lasso').extra;
-    const enet = R.methods.find((m) => m.id === 'enet').extra;
+    if (!R) return;
+    const lassoM = R.methods.find((m) => m.id === 'lasso');
+    const enetM = R.methods.find((m) => m.id === 'enet');
+    const lasso = lassoM ? lassoM.extra : null;
+    const enet = enetM ? enetM.extra : null;
+    if (!lasso || !enet) return;
+
     makeChart('penaltyChart', {
       type: 'bar',
       data: {
@@ -436,21 +597,25 @@
   /* ---------------------------------------------------------- explorer */
   function setupExplorer() {
     const { R } = state;
+    if (!R || !R.methods || !R.methods.length) return;
     const { best } = summarize();
     const prevM = $('exMethod').value, prevK = +$('exK').value;
     $('exMethod').innerHTML = R.methods.map((m) => `<option value="${m.id}">${m.name}</option>`).join('');
     $('exK').innerHTML = Array.from({ length: R.kmax }, (_, i) => `<option value="${i + 1}">k = ${i + 1}</option>`).join('');
     const keep = state._explorerTouched && R.methods.some((m) => m.id === prevM) && prevK <= R.kmax;
-    $('exMethod').value = keep ? prevM : best.method.id;
-    $('exK').value = keep ? prevK : best.k;
+    $('exMethod').value = keep ? prevM : (best && best.method ? best.method.id : R.methods[0].id);
+    $('exK').value = keep ? prevK : (best ? best.k : 1);
     renderExplorer();
   }
 
   function renderExplorer() {
     const { R, D } = state;
-    if (!R) return;
-    const m = R.methods.find((x) => x.id === $('exMethod').value);
-    const r = m.perK[+$('exK').value - 1];
+    if (!R || !D) return;
+    const m = R.methods.find((x) => x.id === $('exMethod').value) || R.methods[0];
+    if (!m || !m.perK) return;
+    const kIdx = Math.max(0, Math.min(+$('exK').value - 1, m.perK.length - 1));
+    const r = m.perK[kIdx];
+    if (!r) return;
     const S = ML.olsSummary(D, R.selRows, r.subset);
 
     // equation
@@ -461,36 +626,38 @@
     $('equation').innerHTML = `<span class="y">ŷ(${esc(D.target)})</span> = ${fmt(S.terms[0].coef)}${terms}`;
 
     // actual vs predicted
-    const preds = R.evaluator.predictions(r.subset);
-    const all = preds.flatMap((p) => [p.y, p.pred]);
-    const lo = Math.min(...all), hi = Math.max(...all);
-    makeChart('avpChart', {
-      type: 'scatter',
-      data: {
-        datasets: [
-          { label: 'Rows', data: preds.map((p) => ({ x: p.y, y: p.pred })), backgroundColor: m.color + 'cc', pointRadius: 4 },
-          { label: 'y = x', type: 'line', data: [{ x: lo, y: lo }, { x: hi, y: hi }], borderColor: 'rgba(226,232,240,0.5)', borderDash: [6, 6], pointRadius: 0, borderWidth: 1.5 },
-        ],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { title: { display: true, text: 'Actual' }, ticks: { callback: fmt } }, y: { title: { display: true, text: 'Predicted' }, ticks: { callback: fmt } } },
-      },
-    });
+    if (R.evaluator) {
+      const preds = R.evaluator.predictions(r.subset);
+      const all = preds.flatMap((p) => [p.y, p.pred]);
+      const lo = Math.min(...all), hi = Math.max(...all);
+      makeChart('avpChart', {
+        type: 'scatter',
+        data: {
+          datasets: [
+            { label: 'Rows', data: preds.map((p) => ({ x: p.y, y: p.pred })), backgroundColor: m.color + 'cc', pointRadius: 4 },
+            { label: 'y = x', type: 'line', data: [{ x: lo, y: lo }, { x: hi, y: hi }], borderColor: 'rgba(226,232,240,0.5)', borderDash: [6, 6], pointRadius: 0, borderWidth: 1.5 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: 'Actual' }, ticks: { callback: fmt } }, y: { title: { display: true, text: 'Predicted' }, ticks: { callback: fmt } } },
+        },
+      });
 
-    makeChart('residChart', {
-      type: 'scatter',
-      data: {
-        datasets: [
-          { label: 'Residual', data: preds.map((p) => ({ x: p.pred, y: p.y - p.pred })), backgroundColor: 'rgba(244,114,182,0.75)', pointRadius: 4 },
-          { type: 'line', data: [{ x: Math.min(...preds.map((p) => p.pred)), y: 0 }, { x: Math.max(...preds.map((p) => p.pred)), y: 0 }], borderColor: 'rgba(226,232,240,0.5)', borderDash: [6, 6], pointRadius: 0, borderWidth: 1.5 },
-        ],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { title: { display: true, text: 'Predicted' }, ticks: { callback: fmt } }, y: { title: { display: true, text: 'Actual − Predicted' }, ticks: { callback: fmt } } },
-      },
-    });
+      makeChart('residChart', {
+        type: 'scatter',
+        data: {
+          datasets: [
+            { label: 'Residual', data: preds.map((p) => ({ x: p.pred, y: p.y - p.pred })), backgroundColor: 'rgba(244,114,182,0.75)', pointRadius: 4 },
+            { type: 'line', data: [{ x: Math.min(...preds.map((p) => p.pred)), y: 0 }, { x: Math.max(...preds.map((p) => p.pred)), y: 0 }], borderColor: 'rgba(226,232,240,0.5)', borderDash: [6, 6], pointRadius: 0, borderWidth: 1.5 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: 'Predicted' }, ticks: { callback: fmt } }, y: { title: { display: true, text: 'Actual − Predicted' }, ticks: { callback: fmt } } },
+        },
+      });
+    }
 
     const coefTerms = S.terms.slice(1).slice().sort((a, b) => Math.abs(b.std) - Math.abs(a.std));
     makeChart('coefChart', {
@@ -526,6 +693,7 @@
   /* ----------------------------------------------------------- heatmap */
   function renderHeatmap() {
     const { D } = state;
+    if (!D) return;
     const MAX = 25;
     const names = [...D.names.slice(0, MAX - 1), D.target];
     const cols = [...D.names.slice(0, MAX - 1).map((_, j) => D.X.map((r) => r[j])), D.y];
@@ -544,6 +712,7 @@
 
   function renderPreview() {
     const cfg = state.cfg[state.key];
+    if (!cfg) return;
     const cols = [cfg.target, ...cfg.colInfo.map((c) => c.name).filter((n) => cfg.selected.has(n) && n !== cfg.target)];
     const idx = cols.map((n) => cfg.colInfo.find((c) => c.name === n).index);
     const rows = cfg.parsed.rows.slice(0, 100);
@@ -554,8 +723,9 @@
   /* ----------------------------------------------------------- results */
   function resultRows() {
     const { R } = state;
-    return R.methods.flatMap((m) => m.perK.map((r) => ({
-      method: m.name, k: r.k, features: r.subset.map((j) => R.names[j]).join(' + '), rmse: r.rmse, mae: r.mae, r2: r.r2,
+    if (!R || !R.methods) return [];
+    return R.methods.flatMap((m) => (m.perK || []).map((r) => ({
+      method: m.name, k: r.k, features: (r.subset || []).map((j) => R.names[j] || '').join(' + '), rmse: r.rmse, mae: r.mae, r2: r.r2,
     })));
   }
 
@@ -580,6 +750,7 @@
 
   function downloadChart(id) {
     const src = $(id);
+    if (!src) return;
     const c = document.createElement('canvas');
     c.width = src.width; c.height = src.height;
     const ctx = c.getContext('2d');
@@ -623,7 +794,10 @@
       $('foldsField').querySelector('span').textContent = ho ? 'Inner K folds' : 'K folds';
       scheduleRun(50);
     });
-    ['foldsInput', 'repeatsInput', 'seedInput'].forEach((id) => $(id).addEventListener('change', () => scheduleRun(50)));
+    ['foldsInput', 'repeatsInput', 'seedInput'].forEach((id) => {
+      const el = $(id);
+      if (el) el.addEventListener('change', () => scheduleRun(50));
+    });
     $('testSizeInput').addEventListener('input', (e) => { $('testSizeVal').textContent = e.target.value + '%'; scheduleRun(); });
     $('alphaInput').addEventListener('input', (e) => { $('alphaVal').textContent = e.target.value + '%'; scheduleRun(); });
     $('l1Input').addEventListener('input', (e) => { $('l1Val').textContent = (e.target.value / 100).toFixed(2); scheduleRun(); });
@@ -668,8 +842,17 @@
       state.lang = b.dataset.lang;
       [...$('langSeg').children].forEach((x) => x.classList.toggle('active', x === b));
       renderVariables();
-      if (state.R) { renderInsights(); renderNotes(); }
+      if (state.R) { renderInsights(); renderNotes(); renderChartNote(); }
     });
+
+    const filterBar = $('methodFilterBar');
+    if (filterBar) {
+      filterBar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.filter-chip');
+        if (!btn || !btn.dataset.method) return;
+        setMethodFilter(btn.dataset.method);
+      });
+    }
 
     $('exMethod').addEventListener('change', () => { state._explorerTouched = true; renderExplorer(); });
     $('exK').addEventListener('change', () => { state._explorerTouched = true; renderExplorer(); });
@@ -679,11 +862,21 @@
     // upload
     $('fileInput').addEventListener('change', (e) => handleFile(e.target.files[0]));
     const dz = $('dropzone');
-    ['dragenter', 'dragover'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag'); }));
-    ['dragleave', 'drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('drag'); }));
-    dz.addEventListener('drop', (e) => handleFile(e.dataTransfer.files[0]));
+    if (dz) {
+      ['dragenter', 'dragover'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag'); }));
+      ['dragleave', 'drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('drag'); }));
+      dz.addEventListener('drop', (e) => handleFile(e.dataTransfer.files[0]));
+    }
   }
 
-  bind();
-  loadDataset('startups');
+  // Ensure DOM is ready before initial load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      bind();
+      loadDataset('startups');
+    });
+  } else {
+    bind();
+    loadDataset('startups');
+  }
 })();

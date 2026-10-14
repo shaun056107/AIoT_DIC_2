@@ -18,7 +18,7 @@
       <div class="badge-row">
         <span class="pill">Multiple Linear Regression</span>
         <span class="pill pill-alt">5 Feature-Selection Methods</span>
-        <span class="pill pill-alt">100% in-browser</span>
+        <span class="pill pill-alt">Python (scikit-learn) + Web</span>
       </div>
       <h1>Feature Selection <span class="grad">Lab</span></h1>
       <p class="lead">比較 <b>Lasso</b>、<b>Forward SFS</b>、<b>RFE</b>、<b>ElasticNet</b> 與 <b>Exhaustive Search</b> 五種特徵選取方法，在不同特徵數量下的 RMSE 與 R² 表現。</p>
@@ -50,7 +50,7 @@
         </label>
         <label class="field" id="repeatsField">
           <span>Repeats</span>
-          <input type="number" id="repeatsInput" min="1" max="20" value="3" />
+          <input type="number" id="repeatsInput" min="1" max="20" value="1" />
         </label>
         <label class="field hidden" id="testSizeField">
           <span>Test size <b id="testSizeVal">20%</b></span>
@@ -109,6 +109,26 @@
 
     <!-- ================= KPIs ================= -->
     <section class="kpis" id="kpis" aria-label="Key metrics"></section>
+
+    <!-- ================= METHOD FILTER & NOTE ================= -->
+    <div class="chart-controls-bar">
+      <div class="chart-filter-bar" id="methodFilterBar">
+        <span class="muted small" style="font-weight:600; margin-right:4px;">Isolate Method · 單獨檢視:</span>
+        <button class="filter-chip active" data-method="all">All 5 Methods (全部)</button>
+        <button class="filter-chip" data-method="exh" style="--c:#a78bfa">★ Exhaustive</button>
+        <button class="filter-chip" data-method="sfs" style="--c:#34d399">◆ Forward SFS</button>
+        <button class="filter-chip" data-method="lasso" style="--c:#38bdf8">● Lasso (L1)</button>
+        <button class="filter-chip" data-method="rfe" style="--c:#fb923c">▲ RFE</button>
+        <button class="filter-chip" data-method="enet" style="--c:#f472b6">■ ElasticNet</button>
+      </div>
+      <span class="muted small">💡 Tip: Click legend items or chips to isolate any curve</span>
+    </div>
+
+    <div class="chart-note-banner" id="chartNoteBanner">
+      <b>為什麼部分折線完全重疊？(Why do curves overlap?)</b><br />
+      多元線性迴歸中，模型評估指標是由所選特徵子集建立的 OLS 迴歸決定。當多種特徵選取方法<b>選出完全相同的特徵組合</b>時（例如 50 Startups 在 <code>k=1</code> 皆選 <code>R&D Spend</code>、<code>k=2</code> 皆選 <code>R&D + Marketing Spend</code>），其 CV RMSE 與 R² <b>在數學上必定 100% 相同</b>！<br />
+      兩組方法於 <code>k=3</code> 分歧：<b>Exhaustive & SFS</b> 找出 <code>State_Florida</code>（RMSE 9,381 較優），而 <b>Lasso / RFE / ElasticNet</b> 納入 <code>Administration</code>（RMSE 9,538 較差）。請點擊上方按鈕單獨切換各方法檢視！
+    </div>
 
     <!-- ================= MAIN CHARTS ================= -->
     <section class="chart-row" aria-label="Comparison charts">
@@ -222,8 +242,9 @@
   <div class="loader hidden" id="loader"><div class="spinner"></div><div>Running feature selection…</div></div>
   <div class="toast hidden" id="toast"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/chart.umd.min.js"></script>
   <script src="js/datasets.js"></script>
+  <script src="js/precomputed.js"></script>
   <script src="js/ml.js"></script>
   <script src="js/app.js"></script>
 </body>

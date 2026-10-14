@@ -605,5 +605,6 @@
   global.ML = {
     parseCSV, inferColumns, prepare, runAnalysis, olsSummary, correlation,
     METHOD_META, nCk, EXHAUSTIVE_LIMIT,
+    Evaluator, kfoldSplits,
   };
 })(window);

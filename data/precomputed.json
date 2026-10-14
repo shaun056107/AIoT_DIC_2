@@ -1,0 +1,1616 @@
+{
+  "startups": {
+    "dataset_name": "50_startups",
+    "target_name": "Profit",
+    "n_samples": 50,
+    "n_features": 5,
+    "kmax": 5,
+    "all_feature_names": [
+      "R&D Spend",
+      "Administration",
+      "Marketing Spend",
+      "State_Florida",
+      "State_New York"
+    ],
+    "baseline_rmse": 39901.0828,
+    "lasso_coefficients": {
+      "R&D Spend": 35074.6556,
+      "Administration": -0.0,
+      "Marketing Spend": 2492.919,
+      "State_Florida": 0.0,
+      "State_New York": -0.0
+    },
+    "enet_coefficients": {
+      "R&D Spend": 38.9355,
+      "Administration": 7.2361,
+      "Marketing Spend": 29.6836,
+      "State_Florida": 3.7649,
+      "State_New York": 0.2907
+    },
+    "methods": [
+      {
+        "id": "lasso",
+        "name": "Lasso (L1 Ranking)",
+        "color": "#38bdf8",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              0
+            ],
+            "subset_features": [
+              "R&D Spend"
+            ],
+            "rmse": 9507.0634,
+            "r2": 0.9432,
+            "mae": 7116.3118,
+            "intercept": 49032.8991,
+            "coefficients": {
+              "R&D Spend": 0.8543
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              0,
+              2
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend"
+            ],
+            "rmse": 9270.714,
+            "r2": 0.946,
+            "mae": 6755.3591,
+            "intercept": 46975.8642,
+            "coefficients": {
+              "R&D Spend": 0.7966,
+              "Marketing Spend": 0.0299
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              0,
+              2,
+              1
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "Administration"
+            ],
+            "rmse": 9538.3254,
+            "r2": 0.9429,
+            "mae": 7026.5426,
+            "intercept": 50122.193,
+            "coefficients": {
+              "R&D Spend": 0.8057,
+              "Marketing Spend": 0.0272,
+              "Administration": -0.0268
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              0,
+              2,
+              1,
+              3
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "Administration",
+              "State_Florida"
+            ],
+            "rmse": 9679.4487,
+            "r2": 0.9412,
+            "mae": 7222.8246,
+            "intercept": 50106.2528,
+            "coefficients": {
+              "R&D Spend": 0.806,
+              "Marketing Spend": 0.027,
+              "Administration": -0.027,
+              "State_Florida": 220.1585
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              0,
+              2,
+              1,
+              3,
+              4
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "Administration",
+              "State_Florida",
+              "State_New York"
+            ],
+            "rmse": 9963.7241,
+            "r2": 0.9376,
+            "mae": 7437.3298,
+            "intercept": 50125.3438,
+            "coefficients": {
+              "R&D Spend": 0.806,
+              "Marketing Spend": 0.027,
+              "Administration": -0.027,
+              "State_Florida": 198.7888,
+              "State_New York": -41.887
+            }
+          }
+        ],
+        "feature_ranking": [
+          "R&D Spend",
+          "Marketing Spend",
+          "Administration",
+          "State_Florida",
+          "State_New York"
+        ]
+      },
+      {
+        "id": "sfs",
+        "name": "Forward SFS",
+        "color": "#34d399",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              0
+            ],
+            "subset_features": [
+              "R&D Spend"
+            ],
+            "rmse": 9507.0634,
+            "r2": 0.9432,
+            "mae": 7116.3118,
+            "intercept": 49032.8991,
+            "coefficients": {
+              "R&D Spend": 0.8543
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              0,
+              2
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend"
+            ],
+            "rmse": 9270.714,
+            "r2": 0.946,
+            "mae": 6755.3591,
+            "intercept": 46975.8642,
+            "coefficients": {
+              "R&D Spend": 0.7966,
+              "Marketing Spend": 0.0299
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              0,
+              2,
+              3
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "State_Florida"
+            ],
+            "rmse": 9380.8411,
+            "r2": 0.9447,
+            "mae": 6931.3385,
+            "intercept": 46950.533,
+            "coefficients": {
+              "R&D Spend": 0.7967,
+              "Marketing Spend": 0.0298,
+              "State_Florida": 150.758
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              0,
+              2,
+              3,
+              4
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "State_Florida",
+              "State_New York"
+            ],
+            "rmse": 9644.1855,
+            "r2": 0.9416,
+            "mae": 7161.1566,
+            "intercept": 46958.945,
+            "coefficients": {
+              "R&D Spend": 0.7967,
+              "Marketing Spend": 0.0298,
+              "State_Florida": 140.7869,
+              "State_New York": -19.5234
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              0,
+              2,
+              3,
+              4,
+              1
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "State_Florida",
+              "State_New York",
+              "Administration"
+            ],
+            "rmse": 9963.7241,
+            "r2": 0.9376,
+            "mae": 7437.3298,
+            "intercept": 50125.3438,
+            "coefficients": {
+              "R&D Spend": 0.806,
+              "Marketing Spend": 0.027,
+              "State_Florida": 198.7888,
+              "State_New York": -41.887,
+              "Administration": -0.027
+            }
+          }
+        ],
+        "feature_ranking": [
+          "R&D Spend",
+          "Marketing Spend",
+          "State_Florida",
+          "State_New York",
+          "Administration"
+        ]
+      },
+      {
+        "id": "rfe",
+        "name": "RFE",
+        "color": "#fb923c",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              0
+            ],
+            "subset_features": [
+              "R&D Spend"
+            ],
+            "rmse": 9507.0634,
+            "r2": 0.9432,
+            "mae": 7116.3118,
+            "intercept": 49032.8991,
+            "coefficients": {
+              "R&D Spend": 0.8543
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              0,
+              2
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend"
+            ],
+            "rmse": 9270.714,
+            "r2": 0.946,
+            "mae": 6755.3591,
+            "intercept": 46975.8642,
+            "coefficients": {
+              "R&D Spend": 0.7966,
+              "Marketing Spend": 0.0299
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              0,
+              2,
+              1
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "Administration"
+            ],
+            "rmse": 9538.3254,
+            "r2": 0.9429,
+            "mae": 7026.5426,
+            "intercept": 50122.193,
+            "coefficients": {
+              "R&D Spend": 0.8057,
+              "Marketing Spend": 0.0272,
+              "Administration": -0.0268
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              0,
+              2,
+              1,
+              3
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "Administration",
+              "State_Florida"
+            ],
+            "rmse": 9679.4487,
+            "r2": 0.9412,
+            "mae": 7222.8246,
+            "intercept": 50106.2528,
+            "coefficients": {
+              "R&D Spend": 0.806,
+              "Marketing Spend": 0.027,
+              "Administration": -0.027,
+              "State_Florida": 220.1585
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              0,
+              2,
+              1,
+              3,
+              4
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "Administration",
+              "State_Florida",
+              "State_New York"
+            ],
+            "rmse": 9963.7241,
+            "r2": 0.9376,
+            "mae": 7437.3298,
+            "intercept": 50125.3438,
+            "coefficients": {
+              "R&D Spend": 0.806,
+              "Marketing Spend": 0.027,
+              "Administration": -0.027,
+              "State_Florida": 198.7888,
+              "State_New York": -41.887
+            }
+          }
+        ],
+        "feature_ranking": [
+          "R&D Spend",
+          "Marketing Spend",
+          "Administration",
+          "State_Florida",
+          "State_New York"
+        ]
+      },
+      {
+        "id": "enet",
+        "name": "ElasticNet Ranking",
+        "color": "#f472b6",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              0
+            ],
+            "subset_features": [
+              "R&D Spend"
+            ],
+            "rmse": 9507.0634,
+            "r2": 0.9432,
+            "mae": 7116.3118,
+            "intercept": 49032.8991,
+            "coefficients": {
+              "R&D Spend": 0.8543
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              0,
+              2
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend"
+            ],
+            "rmse": 9270.714,
+            "r2": 0.946,
+            "mae": 6755.3591,
+            "intercept": 46975.8642,
+            "coefficients": {
+              "R&D Spend": 0.7966,
+              "Marketing Spend": 0.0299
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              0,
+              2,
+              1
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "Administration"
+            ],
+            "rmse": 9538.3254,
+            "r2": 0.9429,
+            "mae": 7026.5426,
+            "intercept": 50122.193,
+            "coefficients": {
+              "R&D Spend": 0.8057,
+              "Marketing Spend": 0.0272,
+              "Administration": -0.0268
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              0,
+              2,
+              1,
+              3
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "Administration",
+              "State_Florida"
+            ],
+            "rmse": 9679.4487,
+            "r2": 0.9412,
+            "mae": 7222.8246,
+            "intercept": 50106.2528,
+            "coefficients": {
+              "R&D Spend": 0.806,
+              "Marketing Spend": 0.027,
+              "Administration": -0.027,
+              "State_Florida": 220.1585
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              0,
+              2,
+              1,
+              3,
+              4
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "Administration",
+              "State_Florida",
+              "State_New York"
+            ],
+            "rmse": 9963.7241,
+            "r2": 0.9376,
+            "mae": 7437.3298,
+            "intercept": 50125.3438,
+            "coefficients": {
+              "R&D Spend": 0.806,
+              "Marketing Spend": 0.027,
+              "Administration": -0.027,
+              "State_Florida": 198.7888,
+              "State_New York": -41.887
+            }
+          }
+        ],
+        "feature_ranking": [
+          "R&D Spend",
+          "Marketing Spend",
+          "Administration",
+          "State_Florida",
+          "State_New York"
+        ]
+      },
+      {
+        "id": "exh",
+        "name": "Exhaustive Search",
+        "color": "#a78bfa",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              0
+            ],
+            "subset_features": [
+              "R&D Spend"
+            ],
+            "rmse": 9507.0634,
+            "r2": 0.9432,
+            "mae": 7116.3118,
+            "intercept": 49032.8991,
+            "coefficients": {
+              "R&D Spend": 0.8543
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              0,
+              2
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend"
+            ],
+            "rmse": 9270.714,
+            "r2": 0.946,
+            "mae": 6755.3591,
+            "intercept": 46975.8642,
+            "coefficients": {
+              "R&D Spend": 0.7966,
+              "Marketing Spend": 0.0299
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              0,
+              2,
+              3
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "State_Florida"
+            ],
+            "rmse": 9380.8411,
+            "r2": 0.9447,
+            "mae": 6931.3385,
+            "intercept": 46950.533,
+            "coefficients": {
+              "R&D Spend": 0.7967,
+              "Marketing Spend": 0.0298,
+              "State_Florida": 150.758
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              0,
+              2,
+              3,
+              4
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Marketing Spend",
+              "State_Florida",
+              "State_New York"
+            ],
+            "rmse": 9644.1855,
+            "r2": 0.9416,
+            "mae": 7161.1566,
+            "intercept": 46958.945,
+            "coefficients": {
+              "R&D Spend": 0.7967,
+              "Marketing Spend": 0.0298,
+              "State_Florida": 140.7869,
+              "State_New York": -19.5234
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "subset_features": [
+              "R&D Spend",
+              "Administration",
+              "Marketing Spend",
+              "State_Florida",
+              "State_New York"
+            ],
+            "rmse": 9963.7241,
+            "r2": 0.9376,
+            "mae": 7437.3298,
+            "intercept": 50125.3438,
+            "coefficients": {
+              "R&D Spend": 0.806,
+              "Administration": -0.027,
+              "Marketing Spend": 0.027,
+              "State_Florida": 198.7888,
+              "State_New York": -41.887
+            }
+          }
+        ],
+        "feature_ranking": null
+      }
+    ],
+    "correlation": {
+      "R&D Spend": {
+        "R&D Spend": 1.0,
+        "Administration": 0.242,
+        "Marketing Spend": 0.7242,
+        "State_Florida": 0.1057,
+        "State_New York": 0.0391,
+        "Profit": 0.9729
+      },
+      "Administration": {
+        "R&D Spend": 0.242,
+        "Administration": 1.0,
+        "Marketing Spend": -0.0322,
+        "State_Florida": 0.0105,
+        "State_New York": 0.0051,
+        "Profit": 0.2007
+      },
+      "Marketing Spend": {
+        "R&D Spend": 0.7242,
+        "Administration": -0.0322,
+        "Marketing Spend": 1.0,
+        "State_Florida": 0.2057,
+        "State_New York": -0.0337,
+        "Profit": 0.7478
+      },
+      "State_Florida": {
+        "R&D Spend": 0.1057,
+        "Administration": 0.0105,
+        "Marketing Spend": 0.2057,
+        "State_Florida": 1.0,
+        "State_New York": -0.4924,
+        "Profit": 0.1162
+      },
+      "State_New York": {
+        "R&D Spend": 0.0391,
+        "Administration": 0.0051,
+        "Marketing Spend": -0.0337,
+        "State_Florida": -0.4924,
+        "State_New York": 1.0,
+        "Profit": 0.0314
+      },
+      "Profit": {
+        "R&D Spend": 0.9729,
+        "Administration": 0.2007,
+        "Marketing Spend": 0.7478,
+        "State_Florida": 0.1162,
+        "State_New York": 0.0314,
+        "Profit": 1.0
+      }
+    }
+  },
+  "boston": {
+    "dataset_name": "boston_housing",
+    "target_name": "medv",
+    "n_samples": 506,
+    "n_features": 13,
+    "kmax": 5,
+    "all_feature_names": [
+      "crim",
+      "zn",
+      "indus",
+      "chas",
+      "nox",
+      "rm",
+      "age",
+      "dis",
+      "rad",
+      "tax",
+      "ptratio",
+      "b",
+      "lstat"
+    ],
+    "baseline_rmse": 9.188,
+    "lasso_coefficients": {
+      "crim": -0.2101,
+      "zn": 0.0,
+      "indus": -0.0,
+      "chas": 0.5106,
+      "nox": -0.5468,
+      "rm": 2.9988,
+      "age": -0.0,
+      "dis": -0.852,
+      "rad": 0.0,
+      "tax": -0.0,
+      "ptratio": -1.7396,
+      "b": 0.6124,
+      "lstat": -3.7003
+    },
+    "enet_coefficients": {
+      "crim": -0.4304,
+      "zn": 0.3527,
+      "indus": -0.2801,
+      "chas": 0.6374,
+      "nox": -0.6804,
+      "rm": 2.8296,
+      "age": -0.0,
+      "dis": -1.145,
+      "rad": 0.0,
+      "tax": -0.1724,
+      "ptratio": -1.5751,
+      "b": 0.6638,
+      "lstat": -3.0503
+    },
+    "methods": [
+      {
+        "id": "lasso",
+        "name": "Lasso (L1 Ranking)",
+        "color": "#38bdf8",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              12
+            ],
+            "subset_features": [
+              "lstat"
+            ],
+            "rmse": 6.2391,
+            "r2": 0.5389,
+            "mae": 4.5308,
+            "intercept": 34.5538,
+            "coefficients": {
+              "lstat": -0.95
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              12,
+              5
+            ],
+            "subset_features": [
+              "lstat",
+              "rm"
+            ],
+            "rmse": 5.5747,
+            "r2": 0.6319,
+            "mae": 3.9869,
+            "intercept": -1.3583,
+            "coefficients": {
+              "lstat": -0.6424,
+              "rm": 5.0948
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              12,
+              5,
+              10
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio"
+            ],
+            "rmse": 5.2726,
+            "r2": 0.6707,
+            "mae": 3.6775,
+            "intercept": 18.5671,
+            "coefficients": {
+              "lstat": -0.5718,
+              "rm": 4.5154,
+              "ptratio": -0.9307
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              12,
+              5,
+              10,
+              7
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio",
+              "dis"
+            ],
+            "rmse": 5.1775,
+            "r2": 0.6825,
+            "mae": 3.6156,
+            "intercept": 24.4714,
+            "coefficients": {
+              "lstat": -0.6654,
+              "rm": 4.2238,
+              "ptratio": -0.9736,
+              "dis": -0.5519
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              12,
+              5,
+              10,
+              7,
+              11
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio",
+              "dis",
+              "b"
+            ],
+            "rmse": 5.1157,
+            "r2": 0.69,
+            "mae": 3.5084,
+            "intercept": 17.7037,
+            "coefficients": {
+              "lstat": -0.6084,
+              "rm": 4.4538,
+              "ptratio": -0.9423,
+              "dis": -0.6152,
+              "b": 0.012
+            }
+          }
+        ],
+        "feature_ranking": [
+          "lstat",
+          "rm",
+          "ptratio",
+          "dis",
+          "b",
+          "nox",
+          "chas",
+          "crim",
+          "age",
+          "indus",
+          "zn",
+          "tax",
+          "rad"
+        ]
+      },
+      {
+        "id": "sfs",
+        "name": "Forward SFS",
+        "color": "#34d399",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              12
+            ],
+            "subset_features": [
+              "lstat"
+            ],
+            "rmse": 6.2391,
+            "r2": 0.5389,
+            "mae": 4.5308,
+            "intercept": 34.5538,
+            "coefficients": {
+              "lstat": -0.95
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              12,
+              5
+            ],
+            "subset_features": [
+              "lstat",
+              "rm"
+            ],
+            "rmse": 5.5747,
+            "r2": 0.6319,
+            "mae": 3.9869,
+            "intercept": -1.3583,
+            "coefficients": {
+              "lstat": -0.6424,
+              "rm": 5.0948
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              12,
+              5,
+              10
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio"
+            ],
+            "rmse": 5.2726,
+            "r2": 0.6707,
+            "mae": 3.6775,
+            "intercept": 18.5671,
+            "coefficients": {
+              "lstat": -0.5718,
+              "rm": 4.5154,
+              "ptratio": -0.9307
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              12,
+              5,
+              10,
+              7
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio",
+              "dis"
+            ],
+            "rmse": 5.1775,
+            "r2": 0.6825,
+            "mae": 3.6156,
+            "intercept": 24.4714,
+            "coefficients": {
+              "lstat": -0.6654,
+              "rm": 4.2238,
+              "ptratio": -0.9736,
+              "dis": -0.5519
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              12,
+              5,
+              10,
+              7,
+              4
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio",
+              "dis",
+              "nox"
+            ],
+            "rmse": 5.0336,
+            "r2": 0.6999,
+            "mae": 3.5367,
+            "intercept": 37.4992,
+            "coefficients": {
+              "lstat": -0.5811,
+              "rm": 4.1633,
+              "ptratio": -1.0458,
+              "dis": -1.1847,
+              "nox": -17.9966
+            }
+          }
+        ],
+        "feature_ranking": [
+          "lstat",
+          "rm",
+          "ptratio",
+          "dis",
+          "nox"
+        ]
+      },
+      {
+        "id": "rfe",
+        "name": "RFE",
+        "color": "#fb923c",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              12
+            ],
+            "subset_features": [
+              "lstat"
+            ],
+            "rmse": 6.2391,
+            "r2": 0.5389,
+            "mae": 4.5308,
+            "intercept": 34.5538,
+            "coefficients": {
+              "lstat": -0.95
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              12,
+              5
+            ],
+            "subset_features": [
+              "lstat",
+              "rm"
+            ],
+            "rmse": 5.5747,
+            "r2": 0.6319,
+            "mae": 3.9869,
+            "intercept": -1.3583,
+            "coefficients": {
+              "lstat": -0.6424,
+              "rm": 5.0948
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              12,
+              5,
+              10
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio"
+            ],
+            "rmse": 5.2726,
+            "r2": 0.6707,
+            "mae": 3.6775,
+            "intercept": 18.5671,
+            "coefficients": {
+              "lstat": -0.5718,
+              "rm": 4.5154,
+              "ptratio": -0.9307
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              12,
+              5,
+              10,
+              7
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio",
+              "dis"
+            ],
+            "rmse": 5.1775,
+            "r2": 0.6825,
+            "mae": 3.6156,
+            "intercept": 24.4714,
+            "coefficients": {
+              "lstat": -0.6654,
+              "rm": 4.2238,
+              "ptratio": -0.9736,
+              "dis": -0.5519
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              12,
+              5,
+              10,
+              7,
+              4
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio",
+              "dis",
+              "nox"
+            ],
+            "rmse": 5.0336,
+            "r2": 0.6999,
+            "mae": 3.5367,
+            "intercept": 37.4992,
+            "coefficients": {
+              "lstat": -0.5811,
+              "rm": 4.1633,
+              "ptratio": -1.0458,
+              "dis": -1.1847,
+              "nox": -17.9966
+            }
+          }
+        ],
+        "feature_ranking": [
+          "lstat",
+          "rm",
+          "ptratio",
+          "dis",
+          "nox",
+          "rad",
+          "tax",
+          "crim",
+          "zn",
+          "b",
+          "chas",
+          "indus",
+          "age"
+        ]
+      },
+      {
+        "id": "enet",
+        "name": "ElasticNet Ranking",
+        "color": "#f472b6",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              12
+            ],
+            "subset_features": [
+              "lstat"
+            ],
+            "rmse": 6.2391,
+            "r2": 0.5389,
+            "mae": 4.5308,
+            "intercept": 34.5538,
+            "coefficients": {
+              "lstat": -0.95
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              12,
+              5
+            ],
+            "subset_features": [
+              "lstat",
+              "rm"
+            ],
+            "rmse": 5.5747,
+            "r2": 0.6319,
+            "mae": 3.9869,
+            "intercept": -1.3583,
+            "coefficients": {
+              "lstat": -0.6424,
+              "rm": 5.0948
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              12,
+              5,
+              10
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio"
+            ],
+            "rmse": 5.2726,
+            "r2": 0.6707,
+            "mae": 3.6775,
+            "intercept": 18.5671,
+            "coefficients": {
+              "lstat": -0.5718,
+              "rm": 4.5154,
+              "ptratio": -0.9307
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              12,
+              5,
+              10,
+              7
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio",
+              "dis"
+            ],
+            "rmse": 5.1775,
+            "r2": 0.6825,
+            "mae": 3.6156,
+            "intercept": 24.4714,
+            "coefficients": {
+              "lstat": -0.6654,
+              "rm": 4.2238,
+              "ptratio": -0.9736,
+              "dis": -0.5519
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              12,
+              5,
+              10,
+              7,
+              4
+            ],
+            "subset_features": [
+              "lstat",
+              "rm",
+              "ptratio",
+              "dis",
+              "nox"
+            ],
+            "rmse": 5.0336,
+            "r2": 0.6999,
+            "mae": 3.5367,
+            "intercept": 37.4992,
+            "coefficients": {
+              "lstat": -0.5811,
+              "rm": 4.1633,
+              "ptratio": -1.0458,
+              "dis": -1.1847,
+              "nox": -17.9966
+            }
+          }
+        ],
+        "feature_ranking": [
+          "lstat",
+          "rm",
+          "ptratio",
+          "dis",
+          "nox",
+          "b",
+          "chas",
+          "crim",
+          "zn",
+          "indus",
+          "tax",
+          "age",
+          "rad"
+        ]
+      },
+      {
+        "id": "exh",
+        "name": "Exhaustive Search",
+        "color": "#a78bfa",
+        "per_k": [
+          {
+            "k": 1,
+            "subset_indices": [
+              12
+            ],
+            "subset_features": [
+              "lstat"
+            ],
+            "rmse": 6.2391,
+            "r2": 0.5389,
+            "mae": 4.5308,
+            "intercept": 34.5538,
+            "coefficients": {
+              "lstat": -0.95
+            }
+          },
+          {
+            "k": 2,
+            "subset_indices": [
+              5,
+              12
+            ],
+            "subset_features": [
+              "rm",
+              "lstat"
+            ],
+            "rmse": 5.5747,
+            "r2": 0.6319,
+            "mae": 3.9869,
+            "intercept": -1.3583,
+            "coefficients": {
+              "rm": 5.0948,
+              "lstat": -0.6424
+            }
+          },
+          {
+            "k": 3,
+            "subset_indices": [
+              5,
+              10,
+              12
+            ],
+            "subset_features": [
+              "rm",
+              "ptratio",
+              "lstat"
+            ],
+            "rmse": 5.2726,
+            "r2": 0.6707,
+            "mae": 3.6775,
+            "intercept": 18.5671,
+            "coefficients": {
+              "rm": 4.5154,
+              "ptratio": -0.9307,
+              "lstat": -0.5718
+            }
+          },
+          {
+            "k": 4,
+            "subset_indices": [
+              5,
+              7,
+              10,
+              12
+            ],
+            "subset_features": [
+              "rm",
+              "dis",
+              "ptratio",
+              "lstat"
+            ],
+            "rmse": 5.1775,
+            "r2": 0.6825,
+            "mae": 3.6156,
+            "intercept": 24.4714,
+            "coefficients": {
+              "rm": 4.2238,
+              "dis": -0.5519,
+              "ptratio": -0.9736,
+              "lstat": -0.6654
+            }
+          },
+          {
+            "k": 5,
+            "subset_indices": [
+              4,
+              5,
+              7,
+              10,
+              12
+            ],
+            "subset_features": [
+              "nox",
+              "rm",
+              "dis",
+              "ptratio",
+              "lstat"
+            ],
+            "rmse": 5.0336,
+            "r2": 0.6999,
+            "mae": 3.5367,
+            "intercept": 37.4992,
+            "coefficients": {
+              "nox": -17.9966,
+              "rm": 4.1633,
+              "dis": -1.1847,
+              "ptratio": -1.0458,
+              "lstat": -0.5811
+            }
+          }
+        ],
+        "feature_ranking": null
+      }
+    ],
+    "correlation": {
+      "crim": {
+        "crim": 1.0,
+        "zn": -0.2005,
+        "indus": 0.4066,
+        "chas": -0.0559,
+        "nox": 0.421,
+        "rm": -0.2192,
+        "age": 0.3527,
+        "dis": -0.3797,
+        "rad": 0.6255,
+        "tax": 0.5828,
+        "ptratio": 0.2899,
+        "b": -0.3851,
+        "lstat": 0.4556,
+        "medv": -0.3883
+      },
+      "zn": {
+        "crim": -0.2005,
+        "zn": 1.0,
+        "indus": -0.5338,
+        "chas": -0.0427,
+        "nox": -0.5166,
+        "rm": 0.312,
+        "age": -0.5695,
+        "dis": 0.6644,
+        "rad": -0.3119,
+        "tax": -0.3146,
+        "ptratio": -0.3917,
+        "b": 0.1755,
+        "lstat": -0.413,
+        "medv": 0.3604
+      },
+      "indus": {
+        "crim": 0.4066,
+        "zn": -0.5338,
+        "indus": 1.0,
+        "chas": 0.0629,
+        "nox": 0.7637,
+        "rm": -0.3917,
+        "age": 0.6448,
+        "dis": -0.708,
+        "rad": 0.5951,
+        "tax": 0.7208,
+        "ptratio": 0.3832,
+        "b": -0.357,
+        "lstat": 0.6038,
+        "medv": -0.4837
+      },
+      "chas": {
+        "crim": -0.0559,
+        "zn": -0.0427,
+        "indus": 0.0629,
+        "chas": 1.0,
+        "nox": 0.0912,
+        "rm": 0.0913,
+        "age": 0.0865,
+        "dis": -0.0992,
+        "rad": -0.0074,
+        "tax": -0.0356,
+        "ptratio": -0.1215,
+        "b": 0.0488,
+        "lstat": -0.0539,
+        "medv": 0.1753
+      },
+      "nox": {
+        "crim": 0.421,
+        "zn": -0.5166,
+        "indus": 0.7637,
+        "chas": 0.0912,
+        "nox": 1.0,
+        "rm": -0.3022,
+        "age": 0.7315,
+        "dis": -0.7692,
+        "rad": 0.6114,
+        "tax": 0.668,
+        "ptratio": 0.1889,
+        "b": -0.3801,
+        "lstat": 0.5909,
+        "medv": -0.4273
+      },
+      "rm": {
+        "crim": -0.2192,
+        "zn": 0.312,
+        "indus": -0.3917,
+        "chas": 0.0913,
+        "nox": -0.3022,
+        "rm": 1.0,
+        "age": -0.2403,
+        "dis": 0.2052,
+        "rad": -0.2098,
+        "tax": -0.292,
+        "ptratio": -0.3555,
+        "b": 0.1281,
+        "lstat": -0.6138,
+        "medv": 0.6954
+      },
+      "age": {
+        "crim": 0.3527,
+        "zn": -0.5695,
+        "indus": 0.6448,
+        "chas": 0.0865,
+        "nox": 0.7315,
+        "rm": -0.2403,
+        "age": 1.0,
+        "dis": -0.7479,
+        "rad": 0.456,
+        "tax": 0.5065,
+        "ptratio": 0.2615,
+        "b": -0.2735,
+        "lstat": 0.6023,
+        "medv": -0.377
+      },
+      "dis": {
+        "crim": -0.3797,
+        "zn": 0.6644,
+        "indus": -0.708,
+        "chas": -0.0992,
+        "nox": -0.7692,
+        "rm": 0.2052,
+        "age": -0.7479,
+        "dis": 1.0,
+        "rad": -0.4946,
+        "tax": -0.5344,
+        "ptratio": -0.2325,
+        "b": 0.2915,
+        "lstat": -0.497,
+        "medv": 0.2499
+      },
+      "rad": {
+        "crim": 0.6255,
+        "zn": -0.3119,
+        "indus": 0.5951,
+        "chas": -0.0074,
+        "nox": 0.6114,
+        "rm": -0.2098,
+        "age": 0.456,
+        "dis": -0.4946,
+        "rad": 1.0,
+        "tax": 0.9102,
+        "ptratio": 0.4647,
+        "b": -0.4444,
+        "lstat": 0.4887,
+        "medv": -0.3816
+      },
+      "tax": {
+        "crim": 0.5828,
+        "zn": -0.3146,
+        "indus": 0.7208,
+        "chas": -0.0356,
+        "nox": 0.668,
+        "rm": -0.292,
+        "age": 0.5065,
+        "dis": -0.5344,
+        "rad": 0.9102,
+        "tax": 1.0,
+        "ptratio": 0.4609,
+        "b": -0.4418,
+        "lstat": 0.544,
+        "medv": -0.4685
+      },
+      "ptratio": {
+        "crim": 0.2899,
+        "zn": -0.3917,
+        "indus": 0.3832,
+        "chas": -0.1215,
+        "nox": 0.1889,
+        "rm": -0.3555,
+        "age": 0.2615,
+        "dis": -0.2325,
+        "rad": 0.4647,
+        "tax": 0.4609,
+        "ptratio": 1.0,
+        "b": -0.1774,
+        "lstat": 0.374,
+        "medv": -0.5078
+      },
+      "b": {
+        "crim": -0.3851,
+        "zn": 0.1755,
+        "indus": -0.357,
+        "chas": 0.0488,
+        "nox": -0.3801,
+        "rm": 0.1281,
+        "age": -0.2735,
+        "dis": 0.2915,
+        "rad": -0.4444,
+        "tax": -0.4418,
+        "ptratio": -0.1774,
+        "b": 1.0,
+        "lstat": -0.3661,
+        "medv": 0.3335
+      },
+      "lstat": {
+        "crim": 0.4556,
+        "zn": -0.413,
+        "indus": 0.6038,
+        "chas": -0.0539,
+        "nox": 0.5909,
+        "rm": -0.6138,
+        "age": 0.6023,
+        "dis": -0.497,
+        "rad": 0.4887,
+        "tax": 0.544,
+        "ptratio": 0.374,
+        "b": -0.3661,
+        "lstat": 1.0,
+        "medv": -0.7377
+      },
+      "medv": {
+        "crim": -0.3883,
+        "zn": 0.3604,
+        "indus": -0.4837,
+        "chas": 0.1753,
+        "nox": -0.4273,
+        "rm": 0.6954,
+        "age": -0.377,
+        "dis": 0.2499,
+        "rad": -0.3816,
+        "tax": -0.4685,
+        "ptratio": -0.5078,
+        "b": 0.3335,
+        "lstat": -0.7377,
+        "medv": 1.0
+      }
+    }
+  }
+}
